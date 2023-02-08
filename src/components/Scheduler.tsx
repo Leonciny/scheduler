@@ -1,18 +1,27 @@
 import { useState } from "react"
 import Style from "./Scheduler.module.css"
-import { Subject, Teacher } from "../Interfaces"
+import { Course, Subject, Teacher } from "../Interfaces"
+import axios from "axios"
+import { COURSE_REQ, HTTP_URL, TEACHER_REQ } from "../Settings"
 
 type HEXColorString  = string
 type RGBColorString  = string | [ number, number, number ]
 type RGBAColorString = string | [ number, number, number, number ]
-type AnyKindOfColor  = HEXColorString | RGBAColorString | RGBAColorString
 
 type HourData = {
     day      : number
     fromHour : number
-    toHour   : number
-    teachers : Teacher[]
-    subject  : Subject
+    teachers : Array<{ 
+        Id             : number, 
+        Name           : string, 
+        Surname        : string, 
+        isAbsent       : boolean, 
+        classYear      : number 
+        TeachingId     : number, 
+        classSection   : string,
+        isSubstitution : boolean, 
+    }>
+    subject  : string
 }
 
 type TimeSettings = {
@@ -30,7 +39,7 @@ type CellProps = {
 type Props = {
     height ?: number | string
     width  ?: number | string
-    data    : Array<HourData>
+    data    : Teacher | Course
     dayTabHeight    : number | string
     hourTabWidth    : number | string
     accent_color    : RGBColorString | RGBAColorString | HEXColorString
@@ -42,6 +51,30 @@ type Props = {
     timeSettings : TimeSettings
 }
 
+type RealCourseResponse = {
+    TeachingID     : number //
+    Day            : number //
+    Hour           : number //
+    TeacherID      : number //
+    SubjectName    : string //
+    CourseYear     : number // x x
+    CourseSection  : string // x x
+    IsAbsence      : boolean //
+    IsSubstitution : boolean //
+    Teacher        : { Name : string, Surname : string } //
+}
+  
+type RealTeacherResponse = { 
+    TeachingID     : number 
+    Day            : number
+    Hour           : number
+    TeacherID      : number
+    SubjectName    : string
+    CourseYear     : number
+    CourseSection  : string
+    IsAbsence      : boolean
+    IsSubstitution : boolean 
+}
 
 
 const FALLBACK_UNIT_TYPE = "px",
@@ -67,7 +100,11 @@ CURRENT_WEEK.setSeconds(0)
 CURRENT_WEEK.setMinutes(0)
 CURRENT_WEEK.setDate( CURRENT_WEEK.getDate() - CURRENT_WEEK.getDay() )
 
-
+/*******************
+ *                 *
+ * HELPER FUNCTION *
+ *                 *
+ *******************/
 
 const extractColor : ( color : RGBColorString | RGBAColorString | HEXColorString ) => string = color => 
     ( typeof color === "string" ) 
@@ -83,7 +120,86 @@ const extractMaybeProp : ( prop : undefined | number | string ) => string = prop
             ? prop
             : `${prop}${FALLBACK_UNIT_TYPE}`
 
+const getIntegerFromTime = ( time : string ) => 
+    time.split(":")
+        .reduce((acc, val, index) => acc + Number(val) * ( 60 ** ( 1 - index ) ), 0)
+        
+const getTimeFromInteger = ( integer : number ) =>
+    `${ ~~( integer / 60 ) }:${ HOUR_FORMATTER.format( integer % 60 ) }`
 
+const sendDataRequest = ( reqObj : Teacher | Course, week : Date ) : Promise<HourData[]> => new Promise( (res, rej) => {
+    let dataArray = new Array<HourData>();
+    (reqObj as Teacher).Surname === null 
+        ? axios.post<RealTeacherResponse[]>( HTTP_URL, { 
+            
+            name : TEACHER_REQ,
+            argv : [(reqObj as Teacher).TeacherID, week.toISOString().split('T')[0]]
+        
+        } ).then( ( { data } : { data : RealTeacherResponse[] } ) => {
+            console.log(data)
+            data.forEach( el => {
+                dataArray.push({
+                    day      : el.Day,
+                    subject  : el.SubjectName,
+                    fromHour : el.Hour,
+                    teachers : new Array({
+                        Id             : el.TeacherID,
+                        Name           : (reqObj as Teacher).Name,
+                        Surname        : (reqObj as Teacher).Surname,
+                        isAbsent       : el.IsAbsence,
+                        classYear      : el.CourseYear, 
+                        TeachingId     : el.TeachingID,
+                        classSection   : el.CourseSection,
+                        isSubstitution : el.IsSubstitution,
+                    })
+                })
+            })
+            res(dataArray)
+        } )
+        : axios.post<RealCourseResponse[]>( HTTP_URL, {
+            
+            name : COURSE_REQ,
+            argv : [(reqObj as Course).Year, (reqObj as Course).Section, week.toISOString().split('T')[0]] 
+
+        } ).then( ( { data } : { data : RealCourseResponse[] } ) => {
+            console.log(data)
+            data.forEach( el => {
+                let found = dataArray.find( hour => hour.day === el.Day && hour.fromHour === el.Hour ) 
+                found ? found.teachers.push( { 
+                    Id             : el.TeacherID,
+                    Name           : el.Teacher.Name,
+                    Surname        : el.Teacher.Surname,
+                    isAbsent       : el.IsAbsence,
+                    classYear      : el.CourseYear, 
+                    TeachingId     : el.TeachingID,
+                    classSection   : el.CourseSection,
+                    isSubstitution : el.IsSubstitution,
+                } ) : dataArray.push( {
+                    day      : el.Day,
+                    subject  : el.SubjectName,
+                    fromHour : el.Hour,
+                    teachers : new Array({
+                        Id             : el.TeacherID,
+                        Name           : el.Teacher.Name,
+                        Surname        : el.Teacher.Surname,
+                        isAbsent       : el.IsAbsence,
+                        classYear      : el.CourseYear, 
+                        TeachingId     : el.TeachingID,
+                        classSection   : el.CourseSection,
+                        isSubstitution : el.IsSubstitution,
+                    })
+                } )
+            })
+            res(dataArray)
+        } )
+    
+})
+
+/*********************
+ *                   *
+ * DAY SELECTION BAR *
+ *                   *
+ *********************/
 
 const DayView = ({ currentWeek, height, width, accent_color, accent_text_color } : { currentWeek : Date, height : string, width : string, accent_color : string, accent_text_color : string  } ) => {
     
@@ -130,12 +246,11 @@ const DayView = ({ currentWeek, height, width, accent_color, accent_text_color }
     </div>
 )}
 
-const getIntegerFromTime = ( time : string ) => 
-    time.split(":")
-        .reduce((acc, val, index) => acc + Number(val) * ( 60 ** ( 1 - index ) ), 0)
-
-const getTimeFromInteger = ( integer : number ) =>
-    `${ ~~( integer / 60 ) }:${ HOUR_FORMATTER.format( integer % 60 ) }`
+/*********************
+ *                   *
+ * LEFT HOUR DISPLAY *
+ *                   *
+ *********************/
 
 const HourDisplay = ({ timeSettings, hourTabWidth, numberOfModules } : { timeSettings : TimeSettings, hourTabWidth : number | string, numberOfModules : number }) => {
 
@@ -163,36 +278,24 @@ const HourDisplay = ({ timeSettings, hourTabWidth, numberOfModules } : { timeSet
     )
 }
 
+/*********************
+ *                   *
+ * HOUR GRID DISPLAY *
+ *                   *
+ *********************/
+
 const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderColor, numberOfModules, popUpCol, width } : { data : HourData[], popUpCol : string, totalHeight : string, cellProps : CellProps, numberOfModules : number, dayTabHeight : string, width : string, borderColor: string }) => {
     
     const CELL_PRIMARY_COL   = extractColor(cellProps.primary_color   ),
           CELL_SECONDARY_COL = extractColor(cellProps.secondary_color ),
           CELL_TEXT_COL      = extractColor(cellProps.text_color      )
 
-    let actual_data = new Array<HourData>()
-    let foundFlag = false;
-    data.forEach( el => { 
-        for( let elem of actual_data ) {
-            if (   elem.day      == el.day 
-                && elem.fromHour == el.fromHour
-                && elem.toHour   == el.toHour
-                && elem.subject  == el.subject
-            ) elem.teachers.push( ...el.teachers )
-            else {
-                foundFlag = true
-                actual_data.push( el )
-            }
-        }
-        if(!foundFlag)actual_data.push( el )
-        foundFlag = false
-    })
-    console.log(actual_data)
     const getItemForCell = (index : number) => {
 
         const [ showPopUp, setShowPopUp ] = useState(false),
               DAY  = index % 5,
               HOUR = ~~ ( index / 5 ),
-              DATA = actual_data.find( hour => (hour.day - MONDAY_OFFSET) === DAY && hour.fromHour === HOUR )
+              DATA = data.find( hour => (hour.day - MONDAY_OFFSET) === DAY && hour.fromHour === HOUR )
 
         return DATA === undefined ? (
             <div className={Style.HourGridCellData} />
@@ -208,7 +311,7 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
                     onMouseOut  = { ev => ev.currentTarget.style.backgroundColor = CELL_PRIMARY_COL   }
                     onClick     = { ev => setShowPopUp(true) }
                 >
-                    <p>{ DATA.subject.Name }</p>
+                    <p>{ DATA.subject }</p>
                 </div>
                 <div 
                     className={Style.popUpWrapper}
@@ -216,10 +319,34 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
                         display : showPopUp ? "grid" : "none", 
                         backgroundColor : popUpCol,
                         width   : `calc(${width} / ${DAYS.length} - 2px)`,
-                        height  : `calc( calc(${totalHeight} - ${dayTabHeight}) / ${numberOfModules})`
+                        minHeight  : `calc( calc(${totalHeight} - ${dayTabHeight}) / ${numberOfModules})`
                     }}
                 >
-                    ds
+                    <div 
+                        className={Style.popUpHeader}
+                        style={{ borderBottom : `1px solid ${borderColor}`}}
+                    >
+                        { DAYS[ DAY ] } Ora :{ DATA.fromHour + 1 } { DATA.subject }
+                    </div>
+                    <div className={Style.wrapPopUpTeachers}>
+                    { DATA.teachers.map( teacher => (
+                        <div className={Style.popUpTeacher}>
+                            <div className={Style.popUpTeacherLabel}>
+                                <span>{teacher.Name} </span>
+                                <span>{teacher.Surname} </span>
+                                <span>{teacher.classYear} {teacher.classSection}</span>
+                            </div>
+                            <div className={Style.popUpTeacherButton}
+                                style={{ color : teacher.isAbsent       ? `var(--absent-teacher-color-pop-up)` : 
+                                                 teacher.isSubstitution ? `var(--substitution-teacher-color-pop-up)` : `var(--teacher-color-pop-up)`,
+                                         borderColor : teacher.isAbsent       ? `var(--absent-teacher-color-pop-up)` : 
+                                                       teacher.isSubstitution ? `var(--substitution-teacher-color-pop-up)` : `var(--teacher-color-pop-up)`}}
+                            >
+                                {teacher.isAbsent ? `segna presente` : teacher.isSubstitution ? `sta sostituendo` : `segna assente`}
+                            </div>
+                        </div>
+                    ))}
+                    </div>
                 </div>
             </div>
         )
@@ -244,10 +371,18 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
     )
 }
 
+/********************
+ *                  *
+ *  MAIN COMPONENT  *
+ *                  *
+ ********************/
+
 export default ({height, width, hourTabWidth, dayTabHeight, data, accent_color, primary_color, secondary_color, cellProps, timeSettings} : Props) => {
 
-    const [week, setWeek] = useState(CURRENT_WEEK),
-          actualH      = extractMaybeProp( height ),
+    const [week, setWeek]             = useState(CURRENT_WEEK),
+          [Actualdata, setActualData] = useState(new Array<HourData>())
+
+    const actualH      = extractMaybeProp( height ),
           actualW      = extractMaybeProp( width  ),
           actualAccCol = extractColor( accent_color    ),
           actualPriCol = extractColor( primary_color   ),
@@ -255,7 +390,9 @@ export default ({height, width, hourTabWidth, dayTabHeight, data, accent_color, 
           NUMBER_OF_MODULES = ( getIntegerFromTime(timeSettings.toHour)
                             - getIntegerFromTime(timeSettings.fromHour) )
                             / getIntegerFromTime(timeSettings.hourLenght)
-    
+
+    sendDataRequest(data, week).then( values => setActualData(values) )
+
     return (
     <div 
         className={Style.schedulerWrap}
@@ -281,7 +418,7 @@ export default ({height, width, hourTabWidth, dayTabHeight, data, accent_color, 
                 dayTabHeight={typeof dayTabHeight === "number" ? `${dayTabHeight}px` : dayTabHeight} 
                 borderColor={actualSecCol} 
                 popUpCol={actualPriCol}
-                data={data} 
+                data={Actualdata} 
                 cellProps={cellProps} 
                 numberOfModules={NUMBER_OF_MODULES}
                 totalHeight={actualH} 
