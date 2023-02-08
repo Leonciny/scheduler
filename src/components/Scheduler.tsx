@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useState } from "react"
 import Style from "./Scheduler.module.css"
 import { Course, Subject, Teacher } from "../Interfaces"
 import axios from "axios"
@@ -52,16 +52,16 @@ type Props = {
 }
 
 type RealCourseResponse = {
-    TeachingID     : number //
-    Day            : number //
-    Hour           : number //
-    TeacherID      : number //
-    SubjectName    : string //
-    CourseYear     : number // x x
-    CourseSection  : string // x x
-    IsAbsence      : boolean //
-    IsSubstitution : boolean //
-    Teacher        : { Name : string, Surname : string } //
+    TeachingID     : number
+    Day            : number
+    Hour           : number
+    TeacherID      : number
+    SubjectName    : string
+    CourseYear     : number 
+    CourseSection  : string 
+    IsAbsence      : boolean
+    IsSubstitution : boolean
+    Teacher        : { Name : string, Surname : string }
 }
   
 type RealTeacherResponse = { 
@@ -284,8 +284,11 @@ const HourDisplay = ({ timeSettings, hourTabWidth, numberOfModules } : { timeSet
  *                   *
  *********************/
 
+let active : React.Dispatch<React.SetStateAction<boolean>> | null = null
+
 const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderColor, numberOfModules, popUpCol, width } : { data : HourData[], popUpCol : string, totalHeight : string, cellProps : CellProps, numberOfModules : number, dayTabHeight : string, width : string, borderColor: string }) => {
     
+
     const CELL_PRIMARY_COL   = extractColor(cellProps.primary_color   ),
           CELL_SECONDARY_COL = extractColor(cellProps.secondary_color ),
           CELL_TEXT_COL      = extractColor(cellProps.text_color      )
@@ -296,7 +299,7 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
               DAY  = index % 5,
               HOUR = ~~ ( index / 5 ),
               DATA = data.find( hour => (hour.day - MONDAY_OFFSET) === DAY && hour.fromHour === HOUR )
-
+        
         return DATA === undefined ? (
             <div className={Style.HourGridCellData} />
         ) : (
@@ -309,7 +312,12 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
                     }} 
                     onMouseOver = { ev => ev.currentTarget.style.backgroundColor = CELL_SECONDARY_COL }
                     onMouseOut  = { ev => ev.currentTarget.style.backgroundColor = CELL_PRIMARY_COL   }
-                    onClick     = { ev => setShowPopUp(true) }
+                    onClick     = { ev => {
+                        if( active !== null) active(false)
+                        active = setShowPopUp 
+                        console.log("dio merda")
+                        setShowPopUp(true) 
+                    } }
                 >
                     <p>{ DATA.subject }</p>
                 </div>
@@ -318,7 +326,7 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
                     style={{
                         display : showPopUp ? "grid" : "none", 
                         backgroundColor : popUpCol,
-                        width   : `calc(${width} / ${DAYS.length} - 2px)`,
+                        width   : `calc(${width} / ${DAYS.length} )`,
                         minHeight  : `calc( calc(${totalHeight} - ${dayTabHeight}) / ${numberOfModules})`
                     }}
                 >
@@ -330,7 +338,7 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
                     </div>
                     <div className={Style.wrapPopUpTeachers}>
                     { DATA.teachers.map( teacher => (
-                        <div className={Style.popUpTeacher}>
+                        <div key={`POP_TEACH_${teacher.Id}`} className={Style.popUpTeacher}>
                             <div className={Style.popUpTeacherLabel}>
                                 <span>{teacher.Name} </span>
                                 <span>{teacher.Surname} </span>
@@ -341,6 +349,7 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
                                                  teacher.isSubstitution ? `var(--substitution-teacher-color-pop-up)` : `var(--teacher-color-pop-up)`,
                                          borderColor : teacher.isAbsent       ? `var(--absent-teacher-color-pop-up)` : 
                                                        teacher.isSubstitution ? `var(--substitution-teacher-color-pop-up)` : `var(--teacher-color-pop-up)`}}
+                                onClick={()=>{ teacher.isAbsent }}
                             >
                                 {teacher.isAbsent ? `segna presente` : teacher.isSubstitution ? `sta sostituendo` : `segna assente`}
                             </div>
@@ -391,7 +400,11 @@ export default ({height, width, hourTabWidth, dayTabHeight, data, accent_color, 
                             - getIntegerFromTime(timeSettings.fromHour) )
                             / getIntegerFromTime(timeSettings.hourLenght)
 
-    sendDataRequest(data, week).then( values => setActualData(values) )
+    useEffect( () => {
+        sendDataRequest(data, week)
+            .then( values => setActualData(values) )
+        }, []
+    )
 
     return (
     <div 

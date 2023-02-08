@@ -141,17 +141,23 @@
     width: 100%;
     display: flex;
     flex-direction: column;
+    gap : 1.1em 
 }
 .popUpTeacher{
-    width: 100%;
     display: flex;
     justify-content: space-between;
+    padding: 0 10px;
 }
 .popUpTeacherLabel{
-    height: 1.2em;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    gap : 0.45em
 }
-.popUpTeacher > span{
-    height: 1.2em;
+.popUpTeacherLabel > span{
+    height: 100%;
+
+    vertical-align: middle;
 }
 .popUpTeacherButton{
     padding: 2px 6px;
