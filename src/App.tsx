@@ -42,25 +42,30 @@ function App() {
 
   return (
     <Scheduler 
-      height          = {"100%"}
-      width           = {"100%"}
-      data            = { data }
-      hourTabWidth    = {'15%'}    
+      height = {"100%"}
+      width  = {"100%"}
+      data   = {data}
+      hourTabWidth    = {'15%'}
       dayTabHeight    = {'10%'}
       accent_color    = {ACCENT_COLOR}
       primary_color   = {PRIMARY_COLOR}
       secondary_color = {SECONDARY_COLOR}
-      cellProps       = {{
-        text_color      : CELL_ACCENT_COLOR,
-        primary_color   : CELL_PRIMARY_COLOR,
-        secondary_color : CELL_SECONDATY_COLOR
+      cellProps = {{
+        text_color           : CELL_ACCENT_COLOR,
+        pres_primary_color   : CELL_PRIMARY_COLOR,
+        pres_secondary_color : CELL_SECONDATY_COLOR,
+        abs_primary_color    : "",
+        abs_secondary_color  : "",
+        sub_primary_color    : "",
+        sub_secondary_color  :"",
+        border_size          : 2
       }}
-      timeSettings    = {{
+      timeSettings = {{
         hourLenght : '1:00',
         fromHour   : "8:00",
         toHour     : "17:00"
-      }}
-    />
+      }} 
+      hourIndentationWidth = {'10px'}/>
   )
 }
 

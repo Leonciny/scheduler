@@ -1,166 +1,179 @@
 :root{
-    --hour-display-font-size : 1.2em;
+	--hour-display-font-size	: 1.2em;
 
-    --teacher-color-pop-up              : #0000ff;
-    --absent-teacher-color-pop-up       : #ff0000;
-    --substitution-teacher-color-pop-up : #ffff00;
+	--teacher-color-pop-up				: #0000ff;
+	--absent-teacher-color-pop-up		: #ff0000;
+	--substitution-teacher-color-pop-up	: #ffff00;
+
+	--teacher-background-pop-up					: #0000ff0a;
+	--absent-teacher-background-pop-up			: #ff00000a;
+	--substitution-teacher-background-pop-up	: #ffff000a;
 }
 
 /*  ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-    [ OUTER CONTAINER SECTION ]
+ !	[ OUTER CONTAINER SECTION ]
 
-    ~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
+	~~~~~~~~~~~~~~~~~~~~~~~~~~~ */
 
 .schedulerWrap{
-    display        : flex;
-    flex-direction : column;
+	display        : flex;
+	flex-direction : column;
 }
 .topWrap, .bottomWrap{
-    display        : flex;
-    flex-direction : row;
+	display        : flex;
+	flex-direction : row;
 }
 .bottomWrap{ 
-    height : 100% 
+	height : 100% 
 }
 
 
 
 /*  ~~~~~~~~~~~~~~~~~~~~~
 
-    [ LEFT HOUR DISPLAY ]
+ !	[ LEFT HOUR DISPLAY ]
 
-    ~~~~~~~~~~~~~~~~~~~~~ */
+	~~~~~~~~~~~~~~~~~~~~~ */
 
 .hourDisplayContainer{
-    height          : 100%;
-    font-size       : var(--hour-display-font-size);
-    display         : flex;
-    flex-direction  : column;
-    justify-content : space-between;
-    text-align      : end;
+	height          : 100%;
+	font-size       : var(--hour-display-font-size);
+	display         : flex;
+	flex-direction  : column;
+	justify-content : space-between;
+	text-align      : end;
 }
 .hourDisplay{
-    display        : flex;
-    height         : 100%;
-    width          : 100%;
-    flex-direction : row-reverse;
-    align-items    : flex-end;
+	display        : flex;
+	height         : 100%;
+	width          : 100%;
+	flex-direction : row-reverse;
+	align-items    : flex-end;
 }
 .hourLabel{
-    width     : fit-content;
-    height    : fit-content;
+	width     : fit-content;
+	height    : fit-content;
 }
 
 
 
 /*  ~~~~~~~~~~~~~~~~~~~~
 
-    [ HOUR INDENTATION ]
+ !	[ HOUR INDENTATION ]
 
-    ~~~~~~~~~~~~~~~~~~~~ */
+	~~~~~~~~~~~~~~~~~~~~ */
 
-.hourSingal{
-
+.indentationWrap{
+	display: flex;
+	height: 100%;
+	flex-direction: column;
 }
-
+.indentationBox{
+	width: 100%;
+}
+.indentationBox:first-child{
+	border-top: 0 !important;
+}
 
 
 /*  ~~~~~~~~~~~~~~~~~~~~
 
-    [ TOP WEEK DISPLAY ]
+ !	[ TOP WEEK DISPLAY ]
 
-    ~~~~~~~~~~~~~~~~~~~~*/
+	~~~~~~~~~~~~~~~~~~~~*/
 
 .schedulerDayContainer{
-    display        : flex;
-    flex-direction : row;
-    width          : 100%;
+	display        : flex;
+	flex-direction : row;
+	width          : 100%;
 }
 .schedulerDayContainer > div {
-    width : 20%;
+	width : 20%;
 }
 .schedulerDay{
-    display : center;
+	display : center;
 }
 .schedulerDay > div {
-    display       : grid;
-    place-content : center;
+	display       : grid;
+	place-content : center;
 }
 .schedulerDay > div > span {
-    display       : block;
-    text-align    : center;
-    width         : 50px;
-    line-height   : 50px;
-    aspect-ratio  : 1 / 1;
-    border-radius : 100vw;
+	display       : block;
+	text-align    : center;
+	width         : 50px;
+	line-height   : 50px;
+	aspect-ratio  : 1 / 1;
+	border-radius : 100vw;
 }
 
 
 
 /*  ~~~~~~~~~~~~~~~~~~~~~~~
 
-    [ SCHEDULE HOURS GRID ]
+ !	[ SCHEDULE HOURS GRID ]
 
-    ~~~~~~~~~~~~~~~~~~~~~~~ */
+	~~~~~~~~~~~~~~~~~~~~~~~ */
 
 .HourGridContainer{
-    display : grid;
-}
-.HourGridCell{
+	display : grid;
 }
 .HourGridCellDataWrap{
-    height        : 100%;
+	height        : 100%;
 }
 .HourGridCellData{
-    display       : grid;
-    place-content : center;
-    height        : 100%;
+	display       : grid;
+	place-content : center;
+	height        : 100%;
 }
 
 
 
 /*  ~~~~~~~~~~~~~~~~~~~~
 
-    [ CELL DATA POP-UP ]
+ !	[ CELL DATA POP-UP ]
 
-    ~~~~~~~~~~~~~~~~~~~~ */
+	~~~~~~~~~~~~~~~~~~~~ */
 
 .popUpWrapper{
-    position    : absolute;
-    background-color: white;
-    box-shadow  : 0px 17px 25px 4px rgba(0,0,0,0.5);
-    transform   : translate(0, -20%);
-    place-items : center;
+	position    : absolute;
+	background-color: white;
+	box-shadow  : 0px 17px 25px 4px rgba(0,0,0,0.5);
+	transform   : translate(0, -20%);
+	place-items : center;
 }
 .popUpHeader{
-    width: 100%;
-    padding: 4px 0;
+	width: 100%;
+	padding: 4px 0;
 }
 .wrapPopUpTeachers{
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    gap : 1.1em 
+	width: 100%;
+	display: flex;
+	flex-direction: column;
+	padding: 6px 0px;
+	gap: 6px
 }
 .popUpTeacher{
-    display: flex;
-    justify-content: space-between;
-    padding: 0 10px;
+	padding: 0 6px;
+	display: flex;
+	justify-content: space-between;
+	height: max-content;
 }
 .popUpTeacherLabel{
-    height: 10vh;
-    display: flex;
-    justify-content: center;
-    gap : 0.45em
+	display: flex;
+	align-items: center;
+	gap : 0.45em;
 }
 .popUpTeacherLabel > span{
-    height: 100%;
-
-    vertical-align: middle;
+	display: grid;
+	place-content: center;
+	height: 100%;
 }
 .popUpTeacherButton{
-    padding: 2px 6px;
-    border: 1px solid;
-    border-radius: 2px;
+	padding: 2px 6px;
+	border: 1px solid;
+	border-radius: 2px;
+	width: 111px;
+	display: grid;
+	place-content: center;
 }
