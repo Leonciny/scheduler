@@ -24,9 +24,13 @@ const PRIMARY_COLOR   = N100,
       SECONDARY_COLOR = N400,
       ACCENT_COLOR    = B600
 
-const CELL_PRIMARY_COLOR   = B600,
-      CELL_SECONDATY_COLOR = B700,
-      CELL_ACCENT_COLOR    = B50
+const CELL_PRIMARY_COLOR    = B600,
+      CELL_SECONDATY_COLOR  = B700,
+      CELL_ACCENT_COLOR     = B900,
+      CELL_ABS_COLOR        = "#ee0000",
+      CELL_ABS_COLOR_HOVER  = "#aa0000",
+      CELL_SUBS_COLOR       = "#00ee00",
+      CELL_SUBS_COLOR_HOVER = "#00aa00"
 
 const HTTP_URL    = "https://gestione-orari.up.railway.app/action/",
       TEACHER_REQ = "getRealTeaching",
@@ -35,5 +39,6 @@ const HTTP_URL    = "https://gestione-orari.up.railway.app/action/",
 export { 
     PRIMARY_COLOR, SECONDARY_COLOR, ACCENT_COLOR,
     CELL_PRIMARY_COLOR, CELL_SECONDATY_COLOR, CELL_ACCENT_COLOR,
+    CELL_ABS_COLOR, CELL_ABS_COLOR_HOVER, CELL_SUBS_COLOR, CELL_SUBS_COLOR_HOVER,
     HTTP_URL, TEACHER_REQ, COURSE_REQ
 }

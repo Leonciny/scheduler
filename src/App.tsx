@@ -2,7 +2,7 @@ import { useState } from 'react'
 import axios from "axios"
 import './App.css'
 import Scheduler from './components/Scheduler'
-import { PRIMARY_COLOR, SECONDARY_COLOR, ACCENT_COLOR, CELL_ACCENT_COLOR, CELL_PRIMARY_COLOR, CELL_SECONDATY_COLOR, HTTP_URL, TEACHER_REQ, COURSE_REQ } from './Settings'
+import { PRIMARY_COLOR, SECONDARY_COLOR, ACCENT_COLOR, CELL_ABS_COLOR, CELL_ABS_COLOR_HOVER, CELL_SUBS_COLOR, CELL_SUBS_COLOR_HOVER, CELL_ACCENT_COLOR, CELL_PRIMARY_COLOR, CELL_SECONDATY_COLOR, HTTP_URL, TEACHER_REQ, COURSE_REQ } from './Settings'
 import { Course, Subject, Teacher } from './Interfaces'
 
 type HourData = {
@@ -54,10 +54,10 @@ function App() {
         text_color           : CELL_ACCENT_COLOR,
         pres_primary_color   : CELL_PRIMARY_COLOR,
         pres_secondary_color : CELL_SECONDATY_COLOR,
-        abs_primary_color    : "",
-        abs_secondary_color  : "",
-        sub_primary_color    : "",
-        sub_secondary_color  :"",
+        abs_primary_color    : CELL_ABS_COLOR,
+        abs_secondary_color  : CELL_ABS_COLOR_HOVER,
+        sub_primary_color    : CELL_SUBS_COLOR,
+        sub_secondary_color  : CELL_SUBS_COLOR_HOVER,
         border_size          : 2
       }}
       timeSettings = {{
