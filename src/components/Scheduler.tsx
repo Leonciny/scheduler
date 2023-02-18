@@ -450,14 +450,30 @@ const GetItemForCell = ( {
 																				: `var(--teacher-background-pop-up)` 
 
 									}}
-							 onClick={ () => { 
+							 onClick={ ev => { 
+								let tempDate = new Date(currentDate)
+								tempDate.setDate(tempDate.getDate() + DAY + 1)
 								if(teacher.isAbsent){
 									teacher.isAbsent = false;
-									setTeacherStatus(teacher.Id, "present", currentDate)
+									ev.currentTarget.innerText = "segna presente"
+									ev.currentTarget.style.color = "var(--absent-teacher-color-pop-up)"
+									ev.currentTarget.style.borderColor = "var(--absent-teacher-color-pop-up)"
+									ev.currentTarget.style.backgroundColor = "var(--absent-teacher-background-pop-up)"
+									setTeacherStatus(teacher.Id, "present", tempDate)
 								} 
 								else {
 									teacher.isAbsent = true;
-									setTeacherStatus(teacher.Id, "absent", currentDate)
+									ev.currentTarget.innerText = teacher.isSubstitution ? "sta sostituendo" : "segna assente"
+									ev.currentTarget.style.color = teacher.isSubstitution 
+										? "var(--substitution-teacher-color-pop-up)"
+										: "var(--teacher-color-pop-up)"
+									ev.currentTarget.style.borderColor = teacher.isSubstitution
+										? "var(--substitution-teacher-color-pop-up)"
+										: "var(--teacher-color-pop-up)"
+									ev.currentTarget.style.backgroundColor = teacher.isSubstitution
+										? "var(--substitution-teacher-background-pop-up)"
+										: "var(--teacher-background-pop-up)"
+									setTeacherStatus(teacher.Id, "absent", tempDate)
 								}
 								colorIndexSet(generateAbsenceHourStatus(data.teachers))
 							 }}
@@ -481,7 +497,7 @@ const GetItemForCell = ( {
 
 let active : React.Dispatch<React.SetStateAction<boolean>> | null = null
 
-const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderColor, numberOfModules, popUpCol, width, currentDate } : { data : HourData[], popUpCol : string, totalHeight : string, cellProps : CellProps, numberOfModules : number, dayTabHeight : string, width : string, borderColor: string, currentDate : Date }) => {
+const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderColor, numberOfModules, popUpCol, width, currentDate, hooks, DATA_MAP } : { data : HourData[], popUpCol : string, totalHeight : string, cellProps : CellProps, numberOfModules : number, dayTabHeight : string, width : string, borderColor: string, currentDate : Date, hooks : Array<[number, React.Dispatch<React.SetStateAction<number>>]>, DATA_MAP : Map<string, HourData> }) => {
 	
 	const TEXT_COLOR = extractColor(cellProps.text_color ),
 		  COLORS = [
@@ -492,19 +508,7 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
 				extractColor(cellProps.pres_secondary_color ),
 				extractColor(cellProps.sub_secondary_color  )
 		  ],
-		  DATA_MAP = new Map<string, HourData>,
-		  LEN = DAYS.length * numberOfModules,
-		  HOOKS = new Array<[number, React.Dispatch<React.SetStateAction<number>>]>(LEN)
-	
-	data.forEach( el => 
-		DATA_MAP.set(`${el.day}d${el.fromHour}`, el)
-	)
-	console.log(DATA_MAP)
-	for(let i = 0; i < LEN; i++ ) {
-		console.log(`${i % DAYS.length + 1}d${~~(i / DAYS.length)}`)
-		console.log(generateAbsenceHourStatus(DATA_MAP.get(`${i % DAYS.length + 1}d${~~(i / DAYS.length)}`)?.teachers as TeacherData[]))
-		HOOKS[i] = useState(generateAbsenceHourStatus(DATA_MAP.get(`${i % DAYS.length + 1}d${~~(i / DAYS.length)}`)?.teachers as TeacherData[]))
-	};
+		  LEN = DAYS.length * numberOfModules
 
 	return (
 		<div className={Style.HourGridContainer} style={{
@@ -529,8 +533,8 @@ const HourGridDisplay = ({ data, totalHeight, dayTabHeight, cellProps, borderCol
 						numberOfModules={numberOfModules}
 						width={width}
 						TEXT_COLOR={TEXT_COLOR}
-						colorIndex={HOOKS[index][0]}
-						colorIndexSet={HOOKS[index][1]} 
+						colorIndex={hooks[index][0]}
+						colorIndexSet={hooks[index][1]} 
 						currentDate={currentDate}/>
 				</div>
 			))}
@@ -570,15 +574,32 @@ export default ( {
 							- getIntegerFromTime(timeSettings.fromHour) )
 							/ getIntegerFromTime(timeSettings.hourLenght)
 
-	const actualDayTabHeight = extractSize( dayTabHeight ),
+	const LEN			= DAYS.length * NUMBER_OF_MODULES,
+		  actualDayTabHeight = extractSize( dayTabHeight ),
 		  actualHourIndentW  = extractSize( hourIndentationWidth  ),
-		  actualHourIndentS  = extractSize( cellProps.border_size )
+		  actualHourIndentS  = extractSize( cellProps.border_size ),
+		  HOOKS = new Array<[number, React.Dispatch<React.SetStateAction<number>>]>(LEN),
+		  [ DATA_MAP, SET_DATA_MAP ] = useState( new Map<string, HourData>() )
 
 	useEffect( () => {
 		sendDataRequest(data, week)
-			.then( values => setActualData(values) )
+			.then( values => {
+				let tMap = new Map<string, HourData>()
+				setActualData(values)
+				values.forEach( el => 
+					tMap.set(`${el.day}d${el.fromHour}`, el)
+				)
+				for(let i = 0; i < LEN; i++ ) 
+					HOOKS[i][1](generateAbsenceHourStatus(tMap.get(`${i % DAYS.length + 1}d${~~(i / DAYS.length)}`)?.teachers as TeacherData[]))
+				
+				SET_DATA_MAP(tMap)
+			 } )
 		}, []
 	)
+
+	for(let i = 0; i < LEN; i++ ) {
+		HOOKS[i] = useState(generateAbsenceHourStatus(DATA_MAP.get(`${i % DAYS.length + 1}d${~~(i / DAYS.length)}`)?.teachers as TeacherData[]))
+	}
 
 	return (
 	<div 
@@ -613,15 +634,17 @@ export default ( {
 				size={actualHourIndentS}
 			/>
 			<HourGridDisplay 
-				dayTabHeight={actualDayTabHeight} 
-				borderColor={actualSecCol} 
+				dayTabHeight={actualDayTabHeight}
+				borderColor={actualSecCol}
 				popUpCol={actualPriCol}
-				data={Actualdata} 
-				cellProps={cellProps} 
+				data={Actualdata}
+				cellProps={cellProps}
 				numberOfModules={NUMBER_OF_MODULES}
-				totalHeight={actualH} 
+				totalHeight={actualH}
 				currentDate={week}
-				width={`calc(100% - ${hourTabWidth})`}
+				hooks={HOOKS}
+				width={`calc(100% - ${hourTabWidth})`} 
+				DATA_MAP={DATA_MAP}
 			/>
 		</div>
 		
